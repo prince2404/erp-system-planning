@@ -1,0 +1,43 @@
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: hospital-erp-backend
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:hospital_erp_db}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+        globally_quoted_identifiers: true
+        hbm2ddl:
+          halt_on_error: true
+    show-sql: false
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+app:
+  cors:
+    allowed-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
+  jwt:
+    secret: ${JWT_SECRET:replace-with-a-strong-256-bit-secret-for-development-only}
+    access-expiry-ms: ${JWT_EXPIRY:900000}
+    refresh-expiry-ms: ${JWT_REFRESH_EXPIRY:604800000}
+  bootstrap-token: ${APP_BOOTSTRAP_TOKEN:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
