@@ -39,7 +39,7 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/users")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER','BLOCK_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<PageResponse<UserResponse>> users(
             @RequestParam(required = false) Role role,
             @RequestParam(required = false) Long centerId,
@@ -52,43 +52,43 @@ public class UserController {
     }
 
     @GetMapping("/users/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER','BLOCK_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<UserResponse> user(@PathVariable Long id) {
         return ApiResponse.ok(userService.get(id), "User loaded");
     }
 
     @PostMapping("/users/create")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER','BLOCK_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<UserResponse> create(@Valid @RequestBody UserCreateRequest request) {
         return ApiResponse.ok(userService.create(request), "User created");
     }
 
     @PutMapping("/users/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER','BLOCK_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<UserResponse> update(@PathVariable Long id, @RequestBody UserUpdateRequest request) {
         return ApiResponse.ok(userService.update(id, request), "User updated");
     }
 
     @DeleteMapping("/users/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER','BLOCK_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<UserResponse> deactivate(@PathVariable Long id) {
         return ApiResponse.ok(userService.deactivate(id), "User deactivated");
     }
 
     @PostMapping(value = "/users/bulk-upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER','BLOCK_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<List<BulkUserRow>> bulkPreview(@RequestPart("file") MultipartFile file) {
         return ApiResponse.ok(userService.previewBulk(file), "Bulk preview created");
     }
 
     @PostMapping("/users/bulk-confirm")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER','BLOCK_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<List<UserResponse>> bulkConfirm(@Valid @RequestBody List<UserCreateRequest> requests) {
         return ApiResponse.ok(userService.bulkConfirm(requests), "Bulk users created");
     }
 
     @GetMapping("/users/template")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER','BLOCK_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ByteArrayResource> template() {
         byte[] content = userService.template();
         return ResponseEntity.ok()
@@ -98,13 +98,13 @@ public class UserController {
     }
 
     @GetMapping("/permissions")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER','BLOCK_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<List<PermissionResponse>> permissions() {
         return ApiResponse.ok(userService.permissions(), "Permissions loaded");
     }
 
     @PostMapping("/permissions")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<PermissionResponse> createPermission(@Valid @RequestBody PermissionRequest request) {
         return ApiResponse.ok(userService.createPermission(request), "Permission created");
     }

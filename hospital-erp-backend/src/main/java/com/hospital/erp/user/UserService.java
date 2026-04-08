@@ -47,6 +47,7 @@ public class UserService {
 
     public PageResponse<UserResponse> list(Role role, Long centerId, Boolean active, Pageable pageable) {
         User actor = currentUserService.get();
+        assertUserManager(actor);
         Specification<User> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (role != null) {
@@ -76,12 +77,14 @@ public class UserService {
     }
 
     public UserResponse get(Long id) {
+        assertUserManager(currentUserService.get());
         return UserResponse.from(findUser(id));
     }
 
     @Transactional
     public UserResponse create(UserCreateRequest request) {
         User actor = currentUserService.get();
+        assertUserManager(actor);
         rankGuard.assertCanCreate(actor, request.role());
         return UserResponse.from(createInternal(request, actor));
     }
@@ -89,6 +92,7 @@ public class UserService {
     @Transactional
     public UserResponse update(Long id, UserUpdateRequest request) {
         User actor = currentUserService.get();
+        assertUserManager(actor);
         User user = findUser(id);
         rankGuard.assertCanManage(actor, user);
 
@@ -123,6 +127,7 @@ public class UserService {
     @Transactional
     public UserResponse deactivate(Long id) {
         User actor = currentUserService.get();
+        assertUserManager(actor);
         User user = findUser(id);
         rankGuard.assertCanManage(actor, user);
         user.setActive(false);
@@ -132,6 +137,7 @@ public class UserService {
     @Transactional
     public List<UserResponse> bulkConfirm(List<UserCreateRequest> requests) {
         User actor = currentUserService.get();
+        assertUserManager(actor);
         return requests.stream()
                 .map(request -> {
                     rankGuard.assertCanCreate(actor, request.role());
@@ -141,6 +147,7 @@ public class UserService {
     }
 
     public List<BulkUserRow> previewBulk(MultipartFile file) {
+        assertUserManager(currentUserService.get());
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
             List<BulkUserRow> rows = new ArrayList<>();
@@ -158,6 +165,7 @@ public class UserService {
     }
 
     public byte[] template() {
+        assertUserManager(currentUserService.get());
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Users");
             Row header = sheet.createRow(0);
@@ -174,11 +182,13 @@ public class UserService {
     }
 
     public List<PermissionResponse> permissions() {
+        assertUserManager(currentUserService.get());
         return permissionRepository.findAll().stream().map(PermissionResponse::from).toList();
     }
 
     @Transactional
     public PermissionResponse createPermission(PermissionRequest request) {
+        assertPermissionManager(currentUserService.get());
         permissionRepository.findByModuleAndAction(request.module(), request.action()).ifPresent(existing -> {
             throw new AppException(HttpStatus.CONFLICT, "Permission already exists");
         });
@@ -320,6 +330,22 @@ public class UserService {
             return Enum.valueOf(type, value.trim().toUpperCase());
         } catch (IllegalArgumentException ex) {
             return null;
+        }
+    }
+
+    private void assertUserManager(User actor) {
+        if (actor.getRole() != Role.SUPER_ADMIN
+                && actor.getRole() != Role.ADMIN
+                && actor.getRole() != Role.STATE_MANAGER
+                && actor.getRole() != Role.DISTRICT_MANAGER
+                && actor.getRole() != Role.BLOCK_MANAGER) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Your role cannot manage users");
+        }
+    }
+
+    private void assertPermissionManager(User actor) {
+        if (actor.getRole() != Role.SUPER_ADMIN && actor.getRole() != Role.ADMIN) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Only SUPER_ADMIN or ADMIN can create permissions");
         }
     }
 }
