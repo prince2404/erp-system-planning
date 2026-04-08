@@ -10,7 +10,8 @@ export const useAuthStore = create(
       permissions: [],
       setSession: ({ accessToken, refreshToken, user, permissions = [] }) =>
         set({ accessToken, refreshToken, user, permissions }),
-      updateAccessToken: (accessToken) => set({ accessToken }),
+      updateTokens: (accessToken, refreshToken) =>
+        set((state) => ({ accessToken, refreshToken: refreshToken ?? state.refreshToken })),
       logout: () => set({ accessToken: null, refreshToken: null, user: null, permissions: [] }),
       isAuthenticated: () => Boolean(get().accessToken)
     }),

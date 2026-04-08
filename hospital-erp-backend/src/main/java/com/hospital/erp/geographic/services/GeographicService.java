@@ -1,6 +1,7 @@
 package com.hospital.erp.geographic.services;
 
 import com.hospital.erp.common.AppException;
+import com.hospital.erp.common.enums.Role;
 import com.hospital.erp.common.enums.ScopeType;
 import com.hospital.erp.geographic.dto.BlockRequest;
 import com.hospital.erp.geographic.dto.CenterRequest;
@@ -35,19 +36,23 @@ public class GeographicService {
     private final ScopeFilter scopeFilter;
 
     public List<StateEntity> states() {
+        assertCanViewStates(currentUserService.get());
         return stateRepository.findAll();
     }
 
     public List<District> districts(Long stateId) {
+        assertCanViewDistricts(currentUserService.get());
         return stateId == null ? districtRepository.findAll() : districtRepository.findByState_Id(stateId);
     }
 
     public List<Block> blocks(Long districtId) {
+        assertCanViewBlocks(currentUserService.get());
         return districtId == null ? blockRepository.findAll() : blockRepository.findByDistrict_Id(districtId);
     }
 
     public List<Center> centers() {
         User user = currentUserService.get();
+        assertCanViewCenters(user);
         if (scopeFilter.isSystem(user)) {
             return centerRepository.findByActiveTrue();
         }
@@ -67,12 +72,14 @@ public class GeographicService {
     }
 
     public Center center(Long id) {
+        assertCanViewCenters(currentUserService.get());
         return centerRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Center not found"));
     }
 
     @Transactional
     public StateEntity createState(StateRequest request) {
+        assertCanCreateState(currentUserService.get());
         stateRepository.findByCode(request.code()).ifPresent(existing -> {
             throw new AppException(HttpStatus.CONFLICT, "State code already exists");
         });
@@ -84,6 +91,7 @@ public class GeographicService {
 
     @Transactional
     public District createDistrict(DistrictRequest request) {
+        assertCanCreateDistrict(currentUserService.get());
         StateEntity state = stateRepository.findById(request.stateId())
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "State not found"));
         District district = new District();
@@ -94,6 +102,7 @@ public class GeographicService {
 
     @Transactional
     public Block createBlock(BlockRequest request) {
+        assertCanCreateBlock(currentUserService.get());
         District district = districtRepository.findById(request.districtId())
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "District not found"));
         Block block = new Block();
@@ -104,6 +113,7 @@ public class GeographicService {
 
     @Transactional
     public Center createCenter(CenterRequest request) {
+        assertCanCreateCenter(currentUserService.get());
         Block block = blockRepository.findById(request.blockId())
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Block not found"));
         District district = districtRepository.findById(request.districtId())
@@ -126,8 +136,71 @@ public class GeographicService {
 
     @Transactional
     public Center deactivateCenter(Long id) {
+        assertCanCreateCenter(currentUserService.get());
         Center center = center(id);
         center.setActive(false);
         return centerRepository.save(center);
+    }
+
+    private void assertCanViewStates(User actor) {
+        if (actor.getRole() != Role.SUPER_ADMIN
+                && actor.getRole() != Role.ADMIN
+                && actor.getRole() != Role.STATE_MANAGER) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Your role cannot view states");
+        }
+    }
+
+    private void assertCanViewDistricts(User actor) {
+        if (actor.getRole() != Role.SUPER_ADMIN
+                && actor.getRole() != Role.ADMIN
+                && actor.getRole() != Role.STATE_MANAGER
+                && actor.getRole() != Role.DISTRICT_MANAGER) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Your role cannot view districts");
+        }
+    }
+
+    private void assertCanViewBlocks(User actor) {
+        if (actor.getRole() != Role.SUPER_ADMIN
+                && actor.getRole() != Role.ADMIN
+                && actor.getRole() != Role.STATE_MANAGER
+                && actor.getRole() != Role.DISTRICT_MANAGER
+                && actor.getRole() != Role.BLOCK_MANAGER) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Your role cannot view blocks");
+        }
+    }
+
+    private void assertCanViewCenters(User actor) {
+        if (actor.getRole() == Role.PATIENT) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Patients cannot view centers");
+        }
+    }
+
+    private void assertCanCreateState(User actor) {
+        if (actor.getRole() != Role.SUPER_ADMIN && actor.getRole() != Role.ADMIN) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Only SUPER_ADMIN or ADMIN can create states");
+        }
+    }
+
+    private void assertCanCreateDistrict(User actor) {
+        if (actor.getRole() != Role.SUPER_ADMIN
+                && actor.getRole() != Role.ADMIN
+                && actor.getRole() != Role.STATE_MANAGER) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Your role cannot create districts");
+        }
+    }
+
+    private void assertCanCreateBlock(User actor) {
+        if (actor.getRole() != Role.SUPER_ADMIN
+                && actor.getRole() != Role.ADMIN
+                && actor.getRole() != Role.STATE_MANAGER
+                && actor.getRole() != Role.DISTRICT_MANAGER) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Your role cannot create blocks");
+        }
+    }
+
+    private void assertCanCreateCenter(User actor) {
+        if (actor.getRole() != Role.SUPER_ADMIN && actor.getRole() != Role.ADMIN) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Only SUPER_ADMIN or ADMIN can manage centers");
+        }
     }
 }

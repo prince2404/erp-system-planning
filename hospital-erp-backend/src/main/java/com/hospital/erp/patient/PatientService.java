@@ -4,6 +4,7 @@ import com.hospital.erp.billing.BillingService;
 import com.hospital.erp.common.AppException;
 import com.hospital.erp.common.PageResponse;
 import com.hospital.erp.common.enums.AdmissionStatus;
+import com.hospital.erp.common.enums.Role;
 import com.hospital.erp.geographic.entities.Center;
 import com.hospital.erp.geographic.repositories.CenterRepository;
 import com.hospital.erp.patient.dto.BedRequest;
@@ -42,6 +43,7 @@ public class PatientService {
     @Transactional
     public Patient register(PatientRequest request) {
         User actor = currentUserService.get();
+        assertCanRegisterPatients(actor);
         Patient patient = new Patient();
         patient.setUhid(generateUhid());
         patient.setName(request.name());
@@ -61,6 +63,7 @@ public class PatientService {
     }
 
     public PageResponse<Patient> search(String q, Pageable pageable) {
+        assertCanViewPatients(currentUserService.get());
         if (q == null || q.isBlank()) {
             return PageResponse.from(patientRepository.findAll(pageable));
         }
@@ -68,12 +71,14 @@ public class PatientService {
     }
 
     public Patient profile(String uhid) {
+        assertCanViewPatients(currentUserService.get());
         return patientRepository.findByUhid(uhid)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Patient not found"));
     }
 
     @Transactional
     public Patient update(Long id, PatientRequest request) {
+        assertCanRegisterPatients(currentUserService.get());
         Patient patient = findPatient(id);
         patient.setName(request.name());
         patient.setAge(request.age());
@@ -92,6 +97,7 @@ public class PatientService {
 
     @Transactional
     public OpdVisit createOpdVisit(OpdVisitRequest request) {
+        assertCanCreateOpd(currentUserService.get());
         LocalDate date = request.visitDate() != null ? request.visitDate() : LocalDate.now();
         OpdVisit visit = new OpdVisit();
         visit.setPatient(findPatient(request.patientId()));
@@ -105,11 +111,13 @@ public class PatientService {
     }
 
     public List<OpdVisit> queue(Long centerId, LocalDate date) {
+        assertCanViewOpd(currentUserService.get());
         return opdVisitRepository.findByCenter_IdAndVisitDateOrderByTokenNumber(centerId, date != null ? date : LocalDate.now());
     }
 
     @Transactional
     public OpdVisit updateOpdStatus(Long id, OpdStatusRequest request) {
+        assertCanUpdateOpd(currentUserService.get());
         OpdVisit visit = opdVisitRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "OPD visit not found"));
         visit.setStatus(request.status());
@@ -119,11 +127,13 @@ public class PatientService {
     }
 
     public List<OpdVisit> opdHistory(Long patientId) {
+        assertCanViewOpd(currentUserService.get());
         return opdVisitRepository.findByPatient_IdOrderByVisitDateDesc(patientId);
     }
 
     @Transactional
     public Bed createBed(BedRequest request) {
+        assertCanManageBeds(currentUserService.get());
         Bed bed = new Bed();
         bed.setCenter(findCenter(request.centerId()));
         bed.setWard(request.ward());
@@ -133,6 +143,7 @@ public class PatientService {
     }
 
     public List<Bed> availableBeds(Long centerId, String ward) {
+        assertCanViewIpd(currentUserService.get());
         if (ward == null || ward.isBlank()) {
             return bedRepository.findByCenter_IdAndOccupiedFalse(centerId);
         }
@@ -141,6 +152,7 @@ public class PatientService {
 
     @Transactional
     public IpdAdmission admit(IpdAdmissionRequest request) {
+        assertCanManageIpd(currentUserService.get());
         Bed bed = bedRepository.findById(request.bedId())
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Bed not found"));
         if (Boolean.TRUE.equals(bed.getOccupied())) {
@@ -163,11 +175,13 @@ public class PatientService {
     }
 
     public List<IpdAdmission> activeAdmissions(Long centerId) {
+        assertCanViewIpd(currentUserService.get());
         return ipdAdmissionRepository.findByCenter_IdAndStatus(centerId, AdmissionStatus.ADMITTED);
     }
 
     @Transactional
     public IpdAdmission discharge(Long id, DischargeRequest request) {
+        assertCanManageIpd(currentUserService.get());
         IpdAdmission admission = ipdAdmissionRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "IPD admission not found"));
         admission.setDischargeDate(LocalDateTime.now());
@@ -205,5 +219,68 @@ public class PatientService {
     private User findUser(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "User not found"));
+    }
+
+    private void assertCanRegisterPatients(User actor) {
+        if (actor.getRole() != Role.SUPER_ADMIN
+                && actor.getRole() != Role.ADMIN
+                && actor.getRole() != Role.STATE_MANAGER
+                && actor.getRole() != Role.DISTRICT_MANAGER
+                && actor.getRole() != Role.BLOCK_MANAGER
+                && actor.getRole() != Role.DOCTOR
+                && actor.getRole() != Role.RECEPTIONIST) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Your role cannot register or update patients");
+        }
+    }
+
+    private void assertCanViewPatients(User actor) {
+        if (actor.getRole() == Role.PATIENT) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Patients cannot browse patient records");
+        }
+    }
+
+    private void assertCanCreateOpd(User actor) {
+        if (actor.getRole() != Role.SUPER_ADMIN
+                && actor.getRole() != Role.ADMIN
+                && actor.getRole() != Role.DOCTOR
+                && actor.getRole() != Role.RECEPTIONIST) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Your role cannot create OPD visits");
+        }
+    }
+
+    private void assertCanViewOpd(User actor) {
+        if (actor.getRole() == Role.PATIENT) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Patients cannot view OPD records");
+        }
+    }
+
+    private void assertCanUpdateOpd(User actor) {
+        if (actor.getRole() != Role.SUPER_ADMIN
+                && actor.getRole() != Role.ADMIN
+                && actor.getRole() != Role.DOCTOR) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Your role cannot update OPD status");
+        }
+    }
+
+    private void assertCanManageBeds(User actor) {
+        if (actor.getRole() != Role.SUPER_ADMIN
+                && actor.getRole() != Role.ADMIN
+                && actor.getRole() != Role.BLOCK_MANAGER) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Your role cannot manage beds");
+        }
+    }
+
+    private void assertCanViewIpd(User actor) {
+        if (actor.getRole() == Role.PATIENT || actor.getRole() == Role.STATE_MANAGER || actor.getRole() == Role.DISTRICT_MANAGER) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Your role cannot view IPD records");
+        }
+    }
+
+    private void assertCanManageIpd(User actor) {
+        if (actor.getRole() != Role.SUPER_ADMIN
+                && actor.getRole() != Role.ADMIN
+                && actor.getRole() != Role.DOCTOR) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Your role cannot manage IPD admissions");
+        }
     }
 }

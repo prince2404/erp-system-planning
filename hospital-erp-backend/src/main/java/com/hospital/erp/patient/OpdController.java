@@ -23,25 +23,25 @@ public class OpdController {
     private final PatientService patientService;
 
     @PostMapping("/opd/visit")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','DOCTOR','RECEPTIONIST')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<OpdVisit> createVisit(@Valid @RequestBody OpdVisitRequest request) {
         return ApiResponse.ok(patientService.createOpdVisit(request), "OPD visit created");
     }
 
     @GetMapping("/opd/queue")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','DOCTOR','PHARMACIST','RECEPTIONIST','CENTER_STAFF')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<List<OpdVisit>> queue(@RequestParam Long centerId, @RequestParam(required = false) LocalDate date) {
         return ApiResponse.ok(patientService.queue(centerId, date), "OPD queue loaded");
     }
 
     @PutMapping("/opd/visit/{id}/status")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','DOCTOR')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<OpdVisit> updateStatus(@PathVariable Long id, @Valid @RequestBody OpdStatusRequest request) {
         return ApiResponse.ok(patientService.updateOpdStatus(id, request), "OPD status updated");
     }
 
     @GetMapping("/opd/visits/{patientId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','DOCTOR','PHARMACIST','RECEPTIONIST','CENTER_STAFF')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<List<OpdVisit>> history(@PathVariable Long patientId) {
         return ApiResponse.ok(patientService.opdHistory(patientId), "OPD history loaded");
     }

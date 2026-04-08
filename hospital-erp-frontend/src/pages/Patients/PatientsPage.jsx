@@ -29,6 +29,7 @@ export default function PatientsPage() {
           submitLabel="Register Patient"
         />
         <QueryTableCard title="Patients" queryKey="patients" endpoint="/patients" params={{ page: 0, size: 25 }} columns={[
+          { key: 'id', label: 'ID' },
           { key: 'uhid', label: 'UHID' },
           { key: 'name', label: 'Name' },
           { key: 'phone', label: 'Phone' },

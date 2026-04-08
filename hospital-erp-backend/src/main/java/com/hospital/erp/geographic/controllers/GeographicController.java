@@ -29,61 +29,61 @@ public class GeographicController {
     private final GeographicService geographicService;
 
     @GetMapping("/states")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<List<StateResponse>> states() {
         return ApiResponse.ok(geographicService.states().stream().map(StateResponse::from).toList(), "States loaded");
     }
 
     @PostMapping("/states")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<StateResponse> createState(@Valid @RequestBody StateRequest request) {
         return ApiResponse.ok(StateResponse.from(geographicService.createState(request)), "State created");
     }
 
     @GetMapping("/districts")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<List<DistrictResponse>> districts(@RequestParam(required = false) Long stateId) {
         return ApiResponse.ok(geographicService.districts(stateId).stream().map(DistrictResponse::from).toList(), "Districts loaded");
     }
 
     @PostMapping("/districts")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<DistrictResponse> createDistrict(@Valid @RequestBody DistrictRequest request) {
         return ApiResponse.ok(DistrictResponse.from(geographicService.createDistrict(request)), "District created");
     }
 
     @GetMapping("/blocks")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER','BLOCK_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<List<BlockResponse>> blocks(@RequestParam(required = false) Long districtId) {
         return ApiResponse.ok(geographicService.blocks(districtId).stream().map(BlockResponse::from).toList(), "Blocks loaded");
     }
 
     @PostMapping("/blocks")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<BlockResponse> createBlock(@Valid @RequestBody BlockRequest request) {
         return ApiResponse.ok(BlockResponse.from(geographicService.createBlock(request)), "Block created");
     }
 
     @GetMapping("/centers")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER','BLOCK_MANAGER','HR_MANAGER','DOCTOR','PHARMACIST','RECEPTIONIST','CENTER_STAFF')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<List<CenterResponse>> centers() {
         return ApiResponse.ok(geographicService.centers().stream().map(CenterResponse::from).toList(), "Centers loaded");
     }
 
     @GetMapping("/centers/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER','BLOCK_MANAGER','HR_MANAGER','DOCTOR','PHARMACIST','RECEPTIONIST','CENTER_STAFF')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<CenterResponse> center(@PathVariable Long id) {
         return ApiResponse.ok(CenterResponse.from(geographicService.center(id)), "Center loaded");
     }
 
     @PostMapping("/centers")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<CenterResponse> createCenter(@Valid @RequestBody CenterRequest request) {
         return ApiResponse.ok(CenterResponse.from(geographicService.createCenter(request)), "Center created");
     }
 
     @DeleteMapping("/centers/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<CenterResponse> deactivateCenter(@PathVariable Long id) {
         return ApiResponse.ok(CenterResponse.from(geographicService.deactivateCenter(id)), "Center deactivated");
     }

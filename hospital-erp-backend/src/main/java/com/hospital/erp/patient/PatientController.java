@@ -21,13 +21,13 @@ public class PatientController {
     private final PatientService patientService;
 
     @PostMapping("/patients/register")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER','BLOCK_MANAGER','DOCTOR','RECEPTIONIST')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<Patient> register(@Valid @RequestBody PatientRequest request) {
         return ApiResponse.ok(patientService.register(request), "Patient registered");
     }
 
     @GetMapping("/patients")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER','BLOCK_MANAGER','DOCTOR','PHARMACIST','RECEPTIONIST','CENTER_STAFF')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<PageResponse<Patient>> patients(
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "0") int page,
@@ -37,13 +37,13 @@ public class PatientController {
     }
 
     @GetMapping("/patients/{uhid}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER','BLOCK_MANAGER','DOCTOR','PHARMACIST','RECEPTIONIST','CENTER_STAFF')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<Patient> profile(@PathVariable String uhid) {
         return ApiResponse.ok(patientService.profile(uhid), "Patient profile loaded");
     }
 
     @PutMapping("/patients/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','STATE_MANAGER','DISTRICT_MANAGER','BLOCK_MANAGER','DOCTOR','RECEPTIONIST')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<Patient> update(@PathVariable Long id, @Valid @RequestBody PatientRequest request) {
         return ApiResponse.ok(patientService.update(id, request), "Patient updated");
     }
