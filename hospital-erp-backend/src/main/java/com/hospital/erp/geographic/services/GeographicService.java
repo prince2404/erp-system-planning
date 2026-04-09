@@ -120,8 +120,15 @@ public class GeographicService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "District not found"));
         StateEntity state = stateRepository.findById(request.stateId())
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "State not found"));
+        if (!block.getDistrict().getId().equals(district.getId())) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Block does not belong to the selected district");
+        }
+        if (!district.getState().getId().equals(state.getId())) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "District does not belong to the selected state");
+        }
 
         Center center = new Center();
+        center.setCode(generateCenterCode(state, district, block));
         center.setName(request.name());
         center.setAddress(request.address());
         center.setCity(request.city());
@@ -130,6 +137,7 @@ public class GeographicService {
         center.setState(state);
         center.setPhone(request.phone());
         center.setEmail(request.email());
+        center.setPincode(request.pincode());
         center.setActive(true);
         return centerRepository.save(center);
     }
@@ -199,8 +207,32 @@ public class GeographicService {
     }
 
     private void assertCanCreateCenter(User actor) {
-        if (actor.getRole() != Role.SUPER_ADMIN && actor.getRole() != Role.ADMIN) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Only SUPER_ADMIN or ADMIN can manage centers");
+        if (actor.getRole() != Role.SUPER_ADMIN
+                && actor.getRole() != Role.ADMIN
+                && actor.getRole() != Role.STATE_MANAGER
+                && actor.getRole() != Role.DISTRICT_MANAGER
+                && actor.getRole() != Role.BLOCK_MANAGER) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Your role cannot manage centers");
         }
+    }
+
+    private String generateCenterCode(StateEntity state, District district, Block block) {
+        String districtCode = district.getName().replaceAll("[^A-Za-z]", "").toUpperCase();
+        if (districtCode.length() > 3) {
+            districtCode = districtCode.substring(0, 3);
+        }
+        while (districtCode.length() < 3) {
+            districtCode += "X";
+        }
+
+        long sequence = centerRepository.countByBlock_Id(block.getId()) + 1;
+        String code = "ASK-%s-%s-%03d-%03d".formatted(state.getCode(), districtCode, block.getId(), sequence);
+        int guard = 1;
+        while (centerRepository.existsByCode(code)) {
+            sequence += 1;
+            guard += 1;
+            code = "ASK-%s-%s-%03d-%03d".formatted(state.getCode(), districtCode, block.getId(), sequence + guard);
+        }
+        return code;
     }
 }

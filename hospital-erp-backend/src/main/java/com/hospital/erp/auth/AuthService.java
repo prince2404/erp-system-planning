@@ -9,7 +9,7 @@ import com.hospital.erp.common.enums.ScopeType;
 import com.hospital.erp.user.RefreshToken;
 import com.hospital.erp.user.RefreshTokenRepository;
 import com.hospital.erp.user.User;
-import com.hospital.erp.user.UserPermissionRepository;
+import com.hospital.erp.user.PermissionCatalogService;
 import com.hospital.erp.user.UserRepository;
 import com.hospital.erp.user.dto.UserResponse;
 import lombok.RequiredArgsConstructor;
@@ -32,9 +32,9 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserRepository userRepository;
-    private final UserPermissionRepository userPermissionRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PermissionCatalogService permissionCatalogService;
 
     @Value("${app.jwt.refresh-expiry-ms}")
     private long refreshExpiryMs;
@@ -47,6 +47,7 @@ public class AuthService {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
+        user.setLastLoginAt(LocalDateTime.now());
         return tokensFor(user);
     }
 
@@ -86,13 +87,15 @@ public class AuthService {
         user.setRank(Role.SUPER_ADMIN.getRank());
         user.setScopeType(ScopeType.SYSTEM);
         user.setActive(true);
+        user.setEmailVerified(false);
+        user.setPhoneVerified(false);
+        user.setMustChangePassword(false);
+        user.setProfileCompleted(false);
         return tokensFor(userRepository.save(user));
     }
 
     private AuthResponse tokensFor(User user) {
-        List<String> permissions = userPermissionRepository.findByUser_Id(user.getId()).stream()
-                .map(userPermission -> userPermission.getPermission().getModule() + ":" + userPermission.getPermission().getAction())
-                .toList();
+        List<String> permissions = permissionCatalogService.effectivePermissionKeys(user).stream().sorted().toList();
         String refreshToken = createRefreshToken(user);
         return new AuthResponse(jwtService.generateAccessToken(user, permissions), refreshToken, UserResponse.from(user), permissions);
     }

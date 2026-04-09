@@ -20,7 +20,7 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
-    const { refreshToken, updateTokens, logout } = useAuthStore.getState();
+    const { refreshToken, updateSession, logout } = useAuthStore.getState();
     if (error.response?.status === 401 && refreshToken && !original?._retry && !original?.url?.includes('/auth/refresh')) {
       original._retry = true;
       refreshing ??= api.post('/auth/refresh', { refreshToken }).finally(() => {
@@ -29,7 +29,7 @@ api.interceptors.response.use(
       try {
         const response = await refreshing;
         const session = response.data.data;
-        updateTokens(session.accessToken, session.refreshToken);
+        updateSession(session);
         original.headers.Authorization = `Bearer ${session.accessToken}`;
         return api(original);
       } catch (refreshError) {

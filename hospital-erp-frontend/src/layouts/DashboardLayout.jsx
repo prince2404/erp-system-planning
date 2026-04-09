@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar.jsx';
-import Topbar from './Topbar.jsx';
+import TopbarPhase1 from './TopbarPhase1.jsx';
 
 export default function DashboardLayout() {
   return (
@@ -8,7 +8,7 @@ export default function DashboardLayout() {
       <div className="flex">
         <Sidebar />
         <div className="min-w-0 flex-1">
-          <Topbar />
+          <TopbarPhase1 />
           <main className="px-4 py-6 lg:px-8">
             <Outlet />
           </main>

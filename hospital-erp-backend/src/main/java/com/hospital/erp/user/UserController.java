@@ -4,11 +4,18 @@ import com.hospital.erp.common.ApiResponse;
 import com.hospital.erp.common.PageResponse;
 import com.hospital.erp.common.enums.Role;
 import com.hospital.erp.user.dto.BulkUserRow;
+import com.hospital.erp.user.dto.ChangePasswordRequest;
 import com.hospital.erp.user.dto.PermissionRequest;
 import com.hospital.erp.user.dto.PermissionResponse;
 import com.hospital.erp.user.dto.UserCreateRequest;
+import com.hospital.erp.user.dto.UserManagementOptionsResponse;
+import com.hospital.erp.user.dto.UserProfileRequest;
+import com.hospital.erp.user.dto.UserProfileResponse;
+import com.hospital.erp.user.dto.UserProvisionResponse;
 import com.hospital.erp.user.dto.UserResponse;
 import com.hospital.erp.user.dto.UserUpdateRequest;
+import com.hospital.erp.user.dto.VerificationCodeResponse;
+import com.hospital.erp.user.dto.VerifyCodeRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
@@ -37,6 +44,13 @@ import java.util.List;
 @RequestMapping
 public class UserController {
     private final UserService userService;
+    private final UserProfileService userProfileService;
+
+    @GetMapping("/users/options")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<UserManagementOptionsResponse> options() {
+        return ApiResponse.ok(userService.options(), "User management options loaded");
+    }
 
     @GetMapping("/users")
     @PreAuthorize("isAuthenticated()")
@@ -59,8 +73,8 @@ public class UserController {
 
     @PostMapping("/users/create")
     @PreAuthorize("isAuthenticated()")
-    public ApiResponse<UserResponse> create(@Valid @RequestBody UserCreateRequest request) {
-        return ApiResponse.ok(userService.create(request), "User created");
+    public ApiResponse<UserProvisionResponse> create(@Valid @RequestBody UserCreateRequest request) {
+        return ApiResponse.ok(userService.provision(request), "User created");
     }
 
     @PutMapping("/users/{id}")
@@ -107,5 +121,47 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     public ApiResponse<PermissionResponse> createPermission(@Valid @RequestBody PermissionRequest request) {
         return ApiResponse.ok(userService.createPermission(request), "Permission created");
+    }
+
+    @GetMapping("/me/profile")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<UserProfileResponse> myProfile() {
+        return ApiResponse.ok(userProfileService.myProfile(), "Profile loaded");
+    }
+
+    @PutMapping("/me/profile")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<UserProfileResponse> updateMyProfile(@RequestBody UserProfileRequest request) {
+        return ApiResponse.ok(userProfileService.updateMyProfile(request), "Profile updated");
+    }
+
+    @PostMapping("/me/change-password")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<UserProfileResponse> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        return ApiResponse.ok(userProfileService.changePassword(request), "Password updated");
+    }
+
+    @PostMapping("/me/verify-email/request")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<VerificationCodeResponse> requestEmailVerification() {
+        return ApiResponse.ok(userProfileService.requestEmailVerification(), "Email verification code generated");
+    }
+
+    @PostMapping("/me/verify-email/confirm")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<UserProfileResponse> confirmEmailVerification(@Valid @RequestBody VerifyCodeRequest request) {
+        return ApiResponse.ok(userProfileService.verifyEmail(request.code()), "Email verified");
+    }
+
+    @PostMapping("/me/verify-phone/request")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<VerificationCodeResponse> requestPhoneVerification() {
+        return ApiResponse.ok(userProfileService.requestPhoneVerification(), "Phone verification code generated");
+    }
+
+    @PostMapping("/me/verify-phone/confirm")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<UserProfileResponse> confirmPhoneVerification(@Valid @RequestBody VerifyCodeRequest request) {
+        return ApiResponse.ok(userProfileService.verifyPhone(request.code()), "Phone verified");
     }
 }

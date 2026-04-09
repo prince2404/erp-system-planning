@@ -11,6 +11,7 @@ public record CenterRequest(
         @NotNull Long districtId,
         @NotNull Long stateId,
         String phone,
-        String email
+        String email,
+        String pincode
 ) {
 }

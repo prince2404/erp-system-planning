@@ -35,6 +35,9 @@ app:
     access-expiry-ms: ${JWT_EXPIRY:900000}
     refresh-expiry-ms: ${JWT_REFRESH_EXPIRY:604800000}
   bootstrap-token: ${APP_BOOTSTRAP_TOKEN:}
+  notifications:
+    email-delivery: ${EMAIL_DELIVERY_MODE:LOG_ONLY}
+    sms-delivery: ${SMS_DELIVERY_MODE:LOG_ONLY}
 
 management:
   endpoints:

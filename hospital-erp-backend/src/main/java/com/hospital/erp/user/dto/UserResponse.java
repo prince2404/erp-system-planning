@@ -14,9 +14,15 @@ public record UserResponse(
         Role role,
         Integer rank,
         Long centerId,
+        String centerName,
         ScopeType scopeType,
         Long scopeId,
         Boolean active,
+        Boolean emailVerified,
+        Boolean phoneVerified,
+        Boolean mustChangePassword,
+        Boolean profileCompleted,
+        LocalDateTime lastLoginAt,
         LocalDateTime createdAt
 ) {
     public static UserResponse from(User user) {
@@ -28,9 +34,15 @@ public record UserResponse(
                 user.getRole(),
                 user.getRank(),
                 user.getCenter() != null ? user.getCenter().getId() : null,
+                user.getCenter() != null ? user.getCenter().getName() : null,
                 user.getScopeType(),
                 user.getScopeId(),
                 user.getActive(),
+                user.getEmailVerified(),
+                user.getPhoneVerified(),
+                user.getMustChangePassword(),
+                user.getProfileCompleted(),
+                user.getLastLoginAt(),
                 user.getCreatedAt()
         );
     }

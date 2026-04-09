@@ -32,7 +32,7 @@ export default function LoginPage() {
             phone: form.phone
           });
       setSession(response);
-      navigate('/');
+      navigate(response.user?.mustChangePassword ? '/profile' : '/');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Authentication failed');
     } finally {
@@ -45,19 +45,19 @@ export default function LoginPage() {
       <div className="hidden bg-[radial-gradient(circle_at_top_left,_#2563eb,_transparent_32%),linear-gradient(135deg,_#020617,_#0f172a)] p-12 text-white lg:flex lg:flex-col lg:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.35em] text-blue-200">Apana Swastha Kendra</p>
-          <h1 className="mt-6 max-w-xl text-5xl font-semibold leading-tight">Professional hospital ERP for multi-center operations.</h1>
+          <h1 className="mt-6 max-w-xl text-5xl font-semibold leading-tight">Healthcare network operations for rural centers, associates, and family services.</h1>
           <p className="mt-5 max-w-lg text-sm leading-6 text-slate-300">
-            Secure JWT auth, geographic scoping, OPD/IPD, pharmacy, billing, wallet, HR, payroll, and analytics in one system.
+            Phase 1 focuses on business-ready user onboarding, permission management, center setup, and profile verification.
           </p>
         </div>
-        <p className="text-xs text-slate-400">No dummy data is bundled. Initialize the first admin through the bootstrap token only.</p>
+        <p className="text-xs text-slate-400">No dummy data is bundled. Initialize the first super admin through the bootstrap token only.</p>
       </div>
       <div className="flex items-center justify-center bg-slate-50 p-6">
         <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-soft">
           <div className="mb-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-600">Hospital ERP</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-600">Network Admin</p>
             <h2 className="mt-2 text-2xl font-semibold text-slate-950">{mode === 'login' ? 'Sign in' : 'Create first super admin'}</h2>
-            <p className="mt-2 text-sm text-slate-500">Use your MySQL-backed account credentials.</p>
+            <p className="mt-2 text-sm text-slate-500">Use the credentials issued from the portal onboarding flow.</p>
           </div>
           <form className="space-y-4" onSubmit={submit}>
             {mode === 'bootstrap' ? (

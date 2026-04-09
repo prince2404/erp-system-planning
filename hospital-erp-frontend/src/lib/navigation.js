@@ -9,6 +9,7 @@ import {
   HeartPulse,
   MapPinned,
   Pill,
+  Settings,
   Stethoscope,
   Users
 } from 'lucide-react';
@@ -17,6 +18,7 @@ export const navigation = [
   { to: '/', label: 'Dashboard', icon: Gauge },
   { to: '/users', label: 'Users', icon: Users },
   { to: '/centers', label: 'Centers', icon: MapPinned },
+  { to: '/profile', label: 'Profile', icon: Settings },
   { to: '/patients', label: 'Patients', icon: HeartPulse },
   { to: '/opd', label: 'OPD Queue', icon: ClipboardList },
   { to: '/ipd', label: 'IPD & Beds', icon: Bed },
@@ -35,10 +37,12 @@ export const roles = [
   'STATE_MANAGER',
   'DISTRICT_MANAGER',
   'BLOCK_MANAGER',
+  'CENTER_MANAGER',
   'HR_MANAGER',
   'DOCTOR',
   'PHARMACIST',
   'RECEPTIONIST',
+  'ASSOCIATE',
   'CENTER_STAFF',
   'PATIENT'
 ];

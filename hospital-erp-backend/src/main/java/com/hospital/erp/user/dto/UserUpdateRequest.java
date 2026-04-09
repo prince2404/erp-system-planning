@@ -9,10 +9,14 @@ public record UserUpdateRequest(
         String name,
         String phone,
         Role role,
+        Long stateId,
+        Long districtId,
+        Long blockId,
         Long centerId,
         ScopeType scopeType,
         Long scopeId,
         Boolean active,
-        Set<Long> permissionIds
+        Set<Long> permissionIds,
+        Set<String> permissionKeys
 ) {
 }

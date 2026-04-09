@@ -1,12 +1,23 @@
-# Apana Swastha Kendra Hospital ERP
+# Apana Swastha Kendra Platform
 
-Full-stack Hospital ERP implementation based on `Hospital_ERP_ASK_Complete.md`.
+Full-stack implementation evolving from the original hospital ERP into the healthcare business-network platform for Apana Swastha Kendra.
 
 ## Stack
 
 - Backend: Spring Boot 3, Spring Security, Spring Data JPA, JWT, MySQL 8
 - Frontend: React 18, Vite, Tailwind CSS, Zustand, React Query, Axios
 - Package manager: Bun for frontend dependency and script commands
+
+## Phase 1 Scope
+
+Phase 1 is now focused on the business-network foundation:
+
+- simple user creation with auto-generated temporary passwords
+- role template based permissions with toggle overrides
+- system-defined permission catalog for all future modules
+- dropdown-based geography and center creation
+- self-service user profile, bank details, and contact verification
+- email/SMS onboarding and OTP flows with `LOG_ONLY` delivery fallback until provider credentials are added
 
 ## Local Setup
 
@@ -24,14 +35,23 @@ Copy-Item .env.example .env
 
 3. Fill `.env` values locally. Do not commit real credentials.
 
-4. Run backend:
+5. Optional for Phase 1 notification testing:
+
+```env
+EMAIL_DELIVERY_MODE=LOG_ONLY
+SMS_DELIVERY_MODE=LOG_ONLY
+```
+
+In `LOG_ONLY` mode, welcome messages and OTPs are saved in the backend notification audit and OTP previews are returned in the profile verification API for local testing.
+
+6. Run backend:
 
 ```powershell
 cd hospital-erp-backend
 mvn spring-boot:run
 ```
 
-5. Run frontend with Bun:
+7. Run frontend with Bun:
 
 ```powershell
 cd hospital-erp-frontend

@@ -10,4 +10,6 @@ public interface CenterRepository extends JpaRepository<Center, Long> {
     List<Center> findByDistrict_IdAndActiveTrue(Long districtId);
     List<Center> findByBlock_IdAndActiveTrue(Long blockId);
     List<Center> findByActiveTrue();
+    boolean existsByCode(String code);
+    long countByBlock_Id(Long blockId);
 }

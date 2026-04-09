@@ -6,12 +6,14 @@ public enum Role {
     STATE_MANAGER(3),
     DISTRICT_MANAGER(4),
     BLOCK_MANAGER(5),
-    HR_MANAGER(6),
-    DOCTOR(7),
-    PHARMACIST(8),
-    RECEPTIONIST(8),
-    CENTER_STAFF(9),
-    PATIENT(10);
+    CENTER_MANAGER(6),
+    HR_MANAGER(7),
+    DOCTOR(8),
+    PHARMACIST(9),
+    RECEPTIONIST(10),
+    ASSOCIATE(11),
+    CENTER_STAFF(12),
+    PATIENT(13);
 
     private final int rank;
 

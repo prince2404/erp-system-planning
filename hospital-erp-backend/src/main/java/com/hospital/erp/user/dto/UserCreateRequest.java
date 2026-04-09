@@ -11,12 +11,18 @@ import java.util.Set;
 public record UserCreateRequest(
         @NotBlank String name,
         @Email @NotBlank String email,
-        @NotBlank String password,
+        String password,
         String phone,
         @NotNull Role role,
+        Long stateId,
+        Long districtId,
+        Long blockId,
         Long centerId,
         ScopeType scopeType,
         Long scopeId,
-        Set<Long> permissionIds
+        Boolean notifyByEmail,
+        Boolean notifyBySms,
+        Set<Long> permissionIds,
+        Set<String> permissionKeys
 ) {
 }

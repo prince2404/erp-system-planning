@@ -4,7 +4,7 @@ import { endpoints } from '../api/endpoints.js';
 import { useAuthStore } from '../store/authStore.js';
 import { useUiStore } from '../store/uiStore.js';
 
-export default function Topbar() {
+export default function TopbarPhase1() {
   const navigate = useNavigate();
   const { user, refreshToken, logout } = useAuthStore();
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
@@ -28,12 +28,18 @@ export default function Topbar() {
         </button>
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Signed in</p>
-          <p className="text-sm font-semibold text-slate-950">{user?.name || 'User'} · {user?.role || 'Role'}</p>
+          <p className="text-sm font-semibold text-slate-950">{user?.name || 'User'} - {user?.role || 'Role'}</p>
         </div>
-        <button className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50" onClick={handleLogout} type="button">
-          <LogOut size={16} />
-          Logout
-        </button>
+        <div className="flex items-center gap-2">
+          <Link className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50" to="/profile">
+            <Settings size={16} />
+            Profile
+          </Link>
+          <button className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50" onClick={handleLogout} type="button">
+            <LogOut size={16} />
+            Logout
+          </button>
+        </div>
       </div>
     </header>
   );

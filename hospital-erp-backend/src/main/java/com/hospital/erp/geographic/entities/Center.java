@@ -24,6 +24,9 @@ import java.time.LocalDateTime;
 @Table(name = "centers")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Center extends BaseEntity {
+    @Column(nullable = false, unique = true, length = 30)
+    private String code;
+
     @Column(nullable = false, length = 150)
     private String name;
 
@@ -50,6 +53,9 @@ public class Center extends BaseEntity {
 
     @Column(length = 100)
     private String email;
+
+    @Column(length = 10)
+    private String pincode;
 
     @Column(nullable = false)
     private Boolean active = true;
