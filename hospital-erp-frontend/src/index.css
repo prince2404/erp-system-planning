@@ -2,33 +2,124 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 :root {
-  color: #0f172a;
-  background: #f8fafc;
+  --sidebar-width: 272px;
+  --topbar-height: 64px;
 }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+@layer base {
+  html {
+    @apply antialiased;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply m-0 min-h-screen bg-ash-50 font-sans text-ash-950;
+    min-width: 320px;
+  }
+
+  button, input, select, textarea {
+    font: inherit;
+  }
+
+  ::-webkit-scrollbar {
+    @apply w-1.5;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-ash-300;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-ash-400;
+  }
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
+@layer components {
+  /* Cards */
+  .card {
+    @apply rounded-2xl border border-ash-200/80 bg-white shadow-card;
+  }
+  .card-hover {
+    @apply card transition-all duration-200 hover:shadow-soft hover:border-ash-200;
+  }
+
+  /* Inputs */
+  .input {
+    @apply h-10 w-full rounded-xl border border-ash-200 bg-white px-3.5 text-sm text-ash-900
+           outline-none transition-all duration-200
+           placeholder:text-ash-400
+           focus:border-brand-500 focus:ring-2 focus:ring-brand-100
+           disabled:cursor-not-allowed disabled:bg-ash-50 disabled:text-ash-500;
+  }
+  .input-error {
+    @apply border-danger-400 focus:border-danger-500 focus:ring-danger-100;
+  }
+  .textarea {
+    @apply input min-h-[80px] resize-y py-2.5;
+    height: auto;
+  }
+  .select {
+    @apply input appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[right_12px_center] bg-no-repeat pr-10;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold
+           transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-brand-600 text-white shadow-sm hover:bg-brand-700 active:bg-brand-800;
+  }
+  .btn-secondary {
+    @apply btn border border-ash-200 bg-white text-ash-700 hover:bg-ash-50 hover:text-ash-900 active:bg-ash-100;
+  }
+  .btn-danger {
+    @apply btn bg-danger-600 text-white hover:bg-danger-700 active:bg-danger-800;
+  }
+  .btn-ghost {
+    @apply btn text-ash-600 hover:bg-ash-100 hover:text-ash-900;
+  }
+  .btn-sm {
+    @apply h-8 px-3 text-xs;
+  }
+  .btn-lg {
+    @apply h-12 px-6 text-base;
+  }
+  .btn-icon {
+    @apply btn h-9 w-9 p-0;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .badge-blue { @apply bg-brand-50 text-brand-700; }
+  .badge-green { @apply bg-emerald-50 text-emerald-700; }
+  .badge-red { @apply bg-danger-50 text-danger-700; }
+  .badge-amber { @apply bg-amber-50 text-amber-700; }
+  .badge-gray { @apply bg-ash-100 text-ash-600; }
+  .badge-purple { @apply bg-purple-50 text-purple-700; }
+
+  /* Label */
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ash-500;
+  }
 }
 
-.clinical-card {
-  @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
-}
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-brand-600 to-emerald-500 bg-clip-text text-transparent;
+  }
 
-.clinical-input {
-  @apply h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100;
-}
+  .glass {
+    @apply border border-white/20 bg-white/10 backdrop-blur-xl;
+  }
 
-.clinical-button {
-  @apply inline-flex h-11 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60;
+  .animate-in {
+    @apply animate-fade-in;
+  }
 }

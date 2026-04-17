@@ -184,7 +184,10 @@ public class UserService {
             user.setActive(request.active());
         }
         User saved = userRepository.save(user);
-        replacePermissions(saved, resolvePermissionIds(saved.getRole(), request.permissionIds(), request.permissionKeys()), actor);
+        Set<Long> permissionIds = resolvePermissionIds(saved.getRole(), request.permissionIds(), request.permissionKeys());
+        if (!permissionIds.isEmpty()) {
+          replacePermissions(saved, permissionIds, actor);
+        }
         return UserResponse.from(saved);
     }
 

@@ -1,257 +1,266 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { User, Lock, ShieldCheck, CreditCard } from 'lucide-react';
 import { endpoints } from '../../api/endpoints.js';
+import { useAuthStore } from '../../store/authStore.js';
+import { toast } from '../../components/Toast.jsx';
 import PageHeader from '../../components/PageHeader.jsx';
 import SectionCard from '../../components/SectionCard.jsx';
-import { useAuthStore } from '../../store/authStore.js';
-
-const blankProfile = {
-  name: '',
-  phone: '',
-  gender: '',
-  dateOfBirth: '',
-  alternatePhone: '',
-  emergencyContactName: '',
-  emergencyContactPhone: '',
-  address: '',
-  villageOrLocality: '',
-  pincode: '',
-  bankAccountName: '',
-  bankName: '',
-  bankAccountNumber: '',
-  ifscCode: '',
-  upiId: '',
-  idProofType: '',
-  idProofNumber: ''
-};
+import { RoleBadge, VerifiedBadge } from '../../components/Badge.jsx';
 
 export default function ProfilePage() {
   const queryClient = useQueryClient();
-  const updateUser = useAuthStore((state) => state.updateUser);
+  const { user: authUser, updateUser } = useAuthStore();
+  const [tab, setTab] = useState('personal');
+
   const profileQuery = useQuery({ queryKey: ['my-profile'], queryFn: () => endpoints.get('/me/profile') });
-  const [form, setForm] = useState(blankProfile);
-  const [emailCode, setEmailCode] = useState('');
-  const [phoneCode, setPhoneCode] = useState('');
-  const [lastVerification, setLastVerification] = useState(null);
+  const profile = profileQuery.data || {};
 
-  useEffect(() => {
-    if (profileQuery.data) {
-      setForm({
-        name: profileQuery.data.name ?? '',
-        phone: profileQuery.data.phone ?? '',
-        gender: profileQuery.data.gender ?? '',
-        dateOfBirth: profileQuery.data.dateOfBirth ?? '',
-        alternatePhone: profileQuery.data.alternatePhone ?? '',
-        emergencyContactName: profileQuery.data.emergencyContactName ?? '',
-        emergencyContactPhone: profileQuery.data.emergencyContactPhone ?? '',
-        address: profileQuery.data.address ?? '',
-        villageOrLocality: profileQuery.data.villageOrLocality ?? '',
-        pincode: profileQuery.data.pincode ?? '',
-        bankAccountName: profileQuery.data.bankAccountName ?? '',
-        bankName: profileQuery.data.bankName ?? '',
-        bankAccountNumber: profileQuery.data.bankAccountNumber ?? '',
-        ifscCode: profileQuery.data.ifscCode ?? '',
-        upiId: profileQuery.data.upiId ?? '',
-        idProofType: profileQuery.data.idProofType ?? '',
-        idProofNumber: profileQuery.data.idProofNumber ?? ''
-      });
-    }
-  }, [profileQuery.data]);
-
-  const updateProfile = useMutation({
-    mutationFn: (payload) => endpoints.put('/me/profile', payload),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['my-profile'] });
-      updateUser({
-        ...useAuthStore.getState().user,
-        name: data.name,
-        phone: data.phone,
-        emailVerified: data.emailVerified,
-        phoneVerified: data.phoneVerified,
-        mustChangePassword: data.mustChangePassword,
-        profileCompleted: data.profileCompleted
-      });
-    }
-  });
-
-  const passwordMutation = useMutation({
-    mutationFn: (payload) => endpoints.post('/me/change-password', payload),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['my-profile'] });
-      updateUser({
-        ...useAuthStore.getState().user,
-        mustChangePassword: data.mustChangePassword
-      });
-    }
-  });
-
-  const requestEmailCode = useMutation({
-    mutationFn: () => endpoints.post('/me/verify-email/request', {}),
-    onSuccess: (data) => setLastVerification(data)
-  });
-  const requestPhoneCode = useMutation({
-    mutationFn: () => endpoints.post('/me/verify-phone/request', {}),
-    onSuccess: (data) => setLastVerification(data)
-  });
-  const confirmEmail = useMutation({
-    mutationFn: () => endpoints.post('/me/verify-email/confirm', { code: emailCode }),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['my-profile'] });
-      updateUser({
-        ...useAuthStore.getState().user,
-        emailVerified: data.emailVerified
-      });
-      setEmailCode('');
-    }
-  });
-  const confirmPhone = useMutation({
-    mutationFn: () => endpoints.post('/me/verify-phone/confirm', { code: phoneCode }),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['my-profile'] });
-      updateUser({
-        ...useAuthStore.getState().user,
-        phoneVerified: data.phoneVerified
-      });
-      setPhoneCode('');
-    }
-  });
+  const tabs = [
+    { key: 'personal', label: 'Personal Info', icon: User },
+    { key: 'security', label: 'Security', icon: Lock },
+    { key: 'verification', label: 'Verification', icon: ShieldCheck },
+    { key: 'bank', label: 'Bank Details', icon: CreditCard }
+  ];
 
   return (
     <>
-      <PageHeader eyebrow="Phase 1" title="Personal Profile & Verification" description="Every user can complete personal details, verify contact info, and manage bank details for payouts." />
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <SectionCard title="Profile Details" description="Complete this after first login so the account becomes operational.">
-          <form className="grid gap-4 md:grid-cols-2" onSubmit={(event) => { event.preventDefault(); updateProfile.mutate(form); }}>
-            <Field label="Full Name" value={form.name} onChange={(value) => setForm((current) => ({ ...current, name: value }))} />
-            <ReadOnlyField label="Login Email" value={profileQuery.data?.email ?? ''} />
-            <Field label="Phone" value={form.phone} onChange={(value) => setForm((current) => ({ ...current, phone: value }))} />
-            <Field label="Gender" value={form.gender} onChange={(value) => setForm((current) => ({ ...current, gender: value }))} />
-            <Field label="Date of Birth" type="date" value={form.dateOfBirth} onChange={(value) => setForm((current) => ({ ...current, dateOfBirth: value }))} />
-            <Field label="Alternate Phone" value={form.alternatePhone} onChange={(value) => setForm((current) => ({ ...current, alternatePhone: value }))} />
-            <Field label="Emergency Name" value={form.emergencyContactName} onChange={(value) => setForm((current) => ({ ...current, emergencyContactName: value }))} />
-            <Field label="Emergency Phone" value={form.emergencyContactPhone} onChange={(value) => setForm((current) => ({ ...current, emergencyContactPhone: value }))} />
-            <Field label="Village / Locality" value={form.villageOrLocality} onChange={(value) => setForm((current) => ({ ...current, villageOrLocality: value }))} />
-            <Field label="Pincode" value={form.pincode} onChange={(value) => setForm((current) => ({ ...current, pincode: value }))} />
-            <Field label="Bank Account Name" value={form.bankAccountName} onChange={(value) => setForm((current) => ({ ...current, bankAccountName: value }))} />
-            <Field label="Bank Name" value={form.bankName} onChange={(value) => setForm((current) => ({ ...current, bankName: value }))} />
-            <Field label="Account Number" value={form.bankAccountNumber} onChange={(value) => setForm((current) => ({ ...current, bankAccountNumber: value }))} />
-            <Field label="IFSC Code" value={form.ifscCode} onChange={(value) => setForm((current) => ({ ...current, ifscCode: value.toUpperCase() }))} />
-            <Field label="UPI ID" value={form.upiId} onChange={(value) => setForm((current) => ({ ...current, upiId: value }))} />
-            <Field label="ID Proof Type" value={form.idProofType} onChange={(value) => setForm((current) => ({ ...current, idProofType: value }))} />
-            <Field label="ID Proof Number" value={form.idProofNumber} onChange={(value) => setForm((current) => ({ ...current, idProofNumber: value }))} />
-            <div className="md:col-span-2">
-              <label>
-                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Address</span>
-                <textarea className="min-h-28 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" value={form.address} onChange={(event) => setForm((current) => ({ ...current, address: event.target.value }))} />
-              </label>
-            </div>
-            <div className="md:col-span-2">
-              <button className="clinical-button" disabled={updateProfile.isPending} type="submit">
-                {updateProfile.isPending ? 'Saving...' : 'Save Profile'}
-              </button>
-            </div>
-          </form>
-          {updateProfile.isError ? <ErrorText error={updateProfile.error} /> : null}
-          {profileQuery.data ? (
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm">
-              <p>Email verified: <span className="font-semibold">{profileQuery.data.emailVerified ? 'Yes' : 'No'}</span></p>
-              <p>Phone verified: <span className="font-semibold">{profileQuery.data.phoneVerified ? 'Yes' : 'No'}</span></p>
-              <p>Profile completed: <span className="font-semibold">{profileQuery.data.profileCompleted ? 'Yes' : 'No'}</span></p>
-              <p>Password reset pending: <span className="font-semibold">{profileQuery.data.mustChangePassword ? 'Yes' : 'No'}</span></p>
-            </div>
-          ) : null}
-        </SectionCard>
+      <PageHeader eyebrow="Account" title="My Profile" description="Manage your personal information, security settings, and verification status." />
 
-        <div className="space-y-6">
-          <SectionCard title="Password Change" description="New users should change the temporary password immediately after first login.">
-            <PasswordForm mutation={passwordMutation} />
-          </SectionCard>
-          <SectionCard title="Contact Verification" description="Codes are logged for development now. Once email/SMS provider credentials are added, they can be sent externally.">
-            <div className="space-y-4">
-              <VerificationBlock
-                title="Email Verification"
-                requestMutation={requestEmailCode}
-                confirmMutation={confirmEmail}
-                code={emailCode}
-                setCode={setEmailCode}
-                buttonLabel="Request Email Code"
-              />
-              <VerificationBlock
-                title="Phone Verification"
-                requestMutation={requestPhoneCode}
-                confirmMutation={confirmPhone}
-                code={phoneCode}
-                setCode={setPhoneCode}
-                buttonLabel="Request Phone Code"
-              />
-              {lastVerification ? (
-                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-                  <p className="font-semibold">{lastVerification.channel} code prepared</p>
-                  <p className="mt-1">Status: {lastVerification.status}</p>
-                  <p>Destination: {lastVerification.destination}</p>
-                  {lastVerification.previewCode ? <p>Preview Code: <span className="font-mono font-semibold">{lastVerification.previewCode}</span></p> : null}
-                </div>
-              ) : null}
+      {/* Profile header card */}
+      <div className="card mb-6 p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-2xl font-bold text-white shadow-glow">
+            {authUser?.name?.charAt(0)?.toUpperCase() || 'U'}
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold text-ash-900">{authUser?.name}</h2>
+            <p className="text-sm text-ash-500">{authUser?.email}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <RoleBadge role={authUser?.role} />
+              <VerifiedBadge verified={profile.emailVerified ?? authUser?.emailVerified} label="Email" />
+              <VerifiedBadge verified={profile.phoneVerified ?? authUser?.phoneVerified} label="Phone" />
             </div>
-          </SectionCard>
+          </div>
         </div>
       </div>
+
+      {/* Tabs */}
+      <div className="mb-6 flex gap-1 overflow-x-auto rounded-xl bg-ash-100 p-1">
+        {tabs.map(t => {
+          const Icon = t.icon;
+          return (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
+                tab === t.key ? 'bg-white text-ash-900 shadow-sm' : 'text-ash-500 hover:text-ash-700'
+              }`}>
+              <Icon size={15} /> {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {tab === 'personal' && <PersonalTab profile={profile} queryClient={queryClient} />}
+      {tab === 'security' && <SecurityTab />}
+      {tab === 'verification' && <VerificationTab profile={profile} queryClient={queryClient} />}
+      {tab === 'bank' && <BankTab profile={profile} queryClient={queryClient} />}
     </>
   );
 }
 
-function VerificationBlock({ title, requestMutation, confirmMutation, code, setCode, buttonLabel }) {
+function PersonalTab({ profile, queryClient }) {
+  const [form, setForm] = useState({
+    dateOfBirth: profile.dateOfBirth || '',
+    gender: profile.gender || '',
+    bloodGroup: profile.bloodGroup || '',
+    address: profile.address || '',
+    city: profile.city || '',
+    pincode: profile.pincode || '',
+    emergencyName: profile.emergencyName || '',
+    emergencyPhone: profile.emergencyPhone || ''
+  });
+
+  const mutation = useMutation({
+    mutationFn: (p) => endpoints.put('/me/profile', p),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-profile'] }); toast.success('Profile updated'); },
+    onError: (e) => toast.error(e.response?.data?.message || 'Failed to update')
+  });
+
+  const submit = (e) => { e.preventDefault(); mutation.mutate(form); };
+  const update = (k, v) => setForm(c => ({ ...c, [k]: v }));
+
   return (
-    <div className="rounded-2xl border border-slate-200 p-4">
-      <p className="font-semibold text-slate-900">{title}</p>
-      <div className="mt-3 flex flex-wrap gap-3">
-        <button className="rounded-xl border border-blue-200 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50" type="button" onClick={() => requestMutation.mutate()} disabled={requestMutation.isPending}>
-          {requestMutation.isPending ? 'Sending...' : buttonLabel}
+    <SectionCard title="Personal Information" description="Update your personal details">
+      <form className="grid gap-4 sm:grid-cols-2" onSubmit={submit}>
+        <Field label="Date of Birth" type="date" value={form.dateOfBirth} onChange={v => update('dateOfBirth', v)} />
+        <SelectField label="Gender" value={form.gender} onChange={v => update('gender', v)} options={['MALE', 'FEMALE', 'OTHER']} />
+        <Field label="Blood Group" value={form.bloodGroup} onChange={v => update('bloodGroup', v)} placeholder="A+" />
+        <Field label="City" value={form.city} onChange={v => update('city', v)} />
+        <Field label="Pincode" value={form.pincode} onChange={v => update('pincode', v)} />
+        <Field label="Emergency Contact Name" value={form.emergencyName} onChange={v => update('emergencyName', v)} />
+        <Field label="Emergency Phone" value={form.emergencyPhone} onChange={v => update('emergencyPhone', v)} />
+        <div className="sm:col-span-2">
+          <label className="block">
+            <span className="label">Address</span>
+            <textarea className="textarea" value={form.address} onChange={e => update('address', e.target.value)} rows={2} />
+          </label>
+        </div>
+        <div className="sm:col-span-2">
+          <button type="submit" className="btn-primary" disabled={mutation.isPending}>
+            {mutation.isPending ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </form>
+    </SectionCard>
+  );
+}
+
+function SecurityTab() {
+  const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const mutation = useMutation({
+    mutationFn: (p) => endpoints.post('/me/change-password', p),
+    onSuccess: () => { toast.success('Password changed successfully'); setForm({ currentPassword: '', newPassword: '', confirmPassword: '' }); },
+    onError: (e) => toast.error(e.response?.data?.message || 'Failed')
+  });
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (form.newPassword !== form.confirmPassword) { toast.error('Passwords do not match'); return; }
+    if (form.newPassword.length < 8) { toast.error('Password must be at least 8 characters'); return; }
+    mutation.mutate({ currentPassword: form.currentPassword, newPassword: form.newPassword });
+  };
+
+  return (
+    <SectionCard title="Change Password" description="Update your account password">
+      <form className="max-w-md space-y-4" onSubmit={submit}>
+        <Field label="Current Password" type="password" value={form.currentPassword} onChange={v => setForm(c => ({ ...c, currentPassword: v }))} required />
+        <Field label="New Password" type="password" value={form.newPassword} onChange={v => setForm(c => ({ ...c, newPassword: v }))} required />
+        <Field label="Confirm Password" type="password" value={form.confirmPassword} onChange={v => setForm(c => ({ ...c, confirmPassword: v }))} required />
+        <button type="submit" className="btn-primary" disabled={mutation.isPending}>
+          {mutation.isPending ? 'Changing...' : 'Change Password'}
         </button>
-        <input className="clinical-input w-44" placeholder="Enter code" value={code} onChange={(event) => setCode(event.target.value)} />
-        <button className="rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white" type="button" onClick={() => confirmMutation.mutate()} disabled={confirmMutation.isPending || !code}>
-          {confirmMutation.isPending ? 'Verifying...' : 'Verify'}
-        </button>
-      </div>
-      {requestMutation.isError ? <ErrorText error={requestMutation.error} /> : null}
-      {confirmMutation.isError ? <ErrorText error={confirmMutation.error} /> : null}
+      </form>
+    </SectionCard>
+  );
+}
+
+function VerificationTab({ profile, queryClient }) {
+  const [emailCode, setEmailCode] = useState('');
+  const [phoneCode, setPhoneCode] = useState('');
+  const [preview, setPreview] = useState(null);
+
+  const requestEmail = useMutation({
+    mutationFn: () => endpoints.post('/me/verify-email/request'),
+    onSuccess: (data) => { toast.info('Verification code sent to email'); if (data?.preview) setPreview(data.preview); },
+    onError: (e) => toast.error(e.response?.data?.message || 'Failed')
+  });
+
+  const confirmEmail = useMutation({
+    mutationFn: () => endpoints.post('/me/verify-email/confirm', { code: emailCode }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-profile'] }); toast.success('Email verified!'); setEmailCode(''); },
+    onError: (e) => toast.error(e.response?.data?.message || 'Invalid code')
+  });
+
+  const requestPhone = useMutation({
+    mutationFn: () => endpoints.post('/me/verify-phone/request'),
+    onSuccess: (data) => { toast.info('Verification code sent via SMS'); if (data?.preview) setPreview(data.preview); },
+    onError: (e) => toast.error(e.response?.data?.message || 'Failed')
+  });
+
+  const confirmPhone = useMutation({
+    mutationFn: () => endpoints.post('/me/verify-phone/confirm', { code: phoneCode }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-profile'] }); toast.success('Phone verified!'); setPhoneCode(''); },
+    onError: (e) => toast.error(e.response?.data?.message || 'Invalid code')
+  });
+
+  return (
+    <div className="space-y-6">
+      <SectionCard title="Email Verification" description={profile.emailVerified ? '✓ Email is verified' : 'Verify your email address'}>
+        {!profile.emailVerified && (
+          <div className="flex items-end gap-3 max-w-md">
+            <div className="flex-1">
+              <Field label="Verification Code" value={emailCode} onChange={setEmailCode} placeholder="Enter 6-digit code" />
+            </div>
+            <button type="button" className="btn-secondary h-10" onClick={() => requestEmail.mutate()} disabled={requestEmail.isPending}>
+              {requestEmail.isPending ? 'Sending...' : 'Send Code'}
+            </button>
+            <button type="button" className="btn-primary h-10" onClick={() => confirmEmail.mutate()} disabled={!emailCode || confirmEmail.isPending}>
+              Verify
+            </button>
+          </div>
+        )}
+        {preview && (
+          <p className="mt-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-700">
+            LOG_ONLY preview: <code className="font-mono font-bold">{preview}</code>
+          </p>
+        )}
+      </SectionCard>
+
+      <SectionCard title="Phone Verification" description={profile.phoneVerified ? '✓ Phone is verified' : 'Verify your phone number'}>
+        {!profile.phoneVerified && (
+          <div className="flex items-end gap-3 max-w-md">
+            <div className="flex-1">
+              <Field label="Verification Code" value={phoneCode} onChange={setPhoneCode} placeholder="Enter 6-digit code" />
+            </div>
+            <button type="button" className="btn-secondary h-10" onClick={() => requestPhone.mutate()} disabled={requestPhone.isPending}>Send Code</button>
+            <button type="button" className="btn-primary h-10" onClick={() => confirmPhone.mutate()} disabled={!phoneCode}>Verify</button>
+          </div>
+        )}
+      </SectionCard>
     </div>
   );
 }
 
-function PasswordForm({ mutation }) {
-  const [form, setForm] = useState({ currentPassword: '', newPassword: '' });
+function BankTab({ profile, queryClient }) {
+  const [form, setForm] = useState({
+    bankName: profile.bankName || '',
+    accountNumber: profile.accountNumber || '',
+    ifscCode: profile.ifscCode || '',
+    accountHolderName: profile.accountHolderName || '',
+    upiId: profile.upiId || ''
+  });
+
+  const mutation = useMutation({
+    mutationFn: (p) => endpoints.put('/me/profile', p),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-profile'] }); toast.success('Bank details saved'); },
+    onError: (e) => toast.error(e.response?.data?.message || 'Failed')
+  });
+
+  const submit = (e) => { e.preventDefault(); mutation.mutate(form); };
 
   return (
-    <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); mutation.mutate(form); }}>
-      <Field label="Current Password" type="password" value={form.currentPassword} onChange={(value) => setForm((current) => ({ ...current, currentPassword: value }))} required />
-      <Field label="New Password" type="password" value={form.newPassword} onChange={(value) => setForm((current) => ({ ...current, newPassword: value }))} required />
-      <button className="clinical-button" disabled={mutation.isPending} type="submit">
-        {mutation.isPending ? 'Updating...' : 'Change Password'}
-      </button>
-      {mutation.isError ? <ErrorText error={mutation.error} /> : null}
-    </form>
+    <SectionCard title="Bank Details" description="These details are used for salary crediting and commission payouts.">
+      <form className="grid max-w-lg gap-4" onSubmit={submit}>
+        <Field label="Bank Name" value={form.bankName} onChange={v => setForm(c => ({ ...c, bankName: v }))} />
+        <Field label="Account Number" value={form.accountNumber} onChange={v => setForm(c => ({ ...c, accountNumber: v }))} />
+        <Field label="IFSC Code" value={form.ifscCode} onChange={v => setForm(c => ({ ...c, ifscCode: v }))} />
+        <Field label="Account Holder Name" value={form.accountHolderName} onChange={v => setForm(c => ({ ...c, accountHolderName: v }))} />
+        <Field label="UPI ID" value={form.upiId} onChange={v => setForm(c => ({ ...c, upiId: v }))} placeholder="name@upi" />
+        <button type="submit" className="btn-primary w-fit" disabled={mutation.isPending}>
+          {mutation.isPending ? 'Saving...' : 'Save Bank Details'}
+        </button>
+      </form>
+    </SectionCard>
   );
 }
 
-function Field({ label, value, onChange, type = 'text', required = false }) {
+function Field({ label, value, onChange, type = 'text', required = false, placeholder = '' }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">{label}{required ? ' *' : ''}</span>
-      <input className="clinical-input w-full" type={type} value={value} required={required} onChange={(event) => onChange(event.target.value)} />
+      <span className="label">{label}{required && ' *'}</span>
+      <input className="input" type={type} value={value} required={required} placeholder={placeholder} onChange={e => onChange(e.target.value)} />
     </label>
   );
 }
 
-function ReadOnlyField({ label, value }) {
+function SelectField({ label, value, onChange, options }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</span>
-      <input className="clinical-input w-full bg-slate-50" value={value} readOnly />
+      <span className="label">{label}</span>
+      <select className="select" value={value} onChange={e => onChange(e.target.value)}>
+        <option value="">Select</option>
+        {options.map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
     </label>
   );
-}
-
-function ErrorText({ error }) {
-  return <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{error.response?.data?.message || error.message}</p>;
 }

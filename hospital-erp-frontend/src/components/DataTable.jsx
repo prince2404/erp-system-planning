@@ -1,34 +1,35 @@
-export default function DataTable({ columns, rows, empty = 'No records found' }) {
-  const data = Array.isArray(rows) ? rows : rows?.content || (rows && typeof rows === 'object' ? [rows] : []);
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import EmptyState from './EmptyState.jsx';
 
-  if (!data.length) {
-    return (
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-        <p className="text-sm font-medium text-slate-700">{empty}</p>
-        <p className="mt-1 text-xs text-slate-500">Create or import records to see them here.</p>
-      </div>
-    );
+export default function DataTable({ columns, rows, loading, emptyTitle, emptyDescription, page, totalPages, onPageChange }) {
+  if (!loading && (!rows || rows.length === 0)) {
+    return <EmptyState title={emptyTitle || 'No records found'} description={emptyDescription} />;
   }
 
+  const getValue = (row, key) => {
+    if (!key) return null;
+    return key.split('.').reduce((obj, k) => obj?.[k], row);
+  };
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200">
+    <div className="animate-fade-in">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-            <tr>
-              {columns.map((column) => (
-                <th key={column.key} className="px-4 py-3 font-semibold">
-                  {column.label}
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-ash-100">
+              {columns.map(col => (
+                <th key={col.key} className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wider text-ash-500">
+                  {col.label}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 bg-white">
-            {data.map((row, index) => (
-              <tr key={row.id ?? row.uhid ?? index} className={index % 2 ? 'bg-slate-50/60' : 'bg-white'}>
-                {columns.map((column) => (
-                  <td key={column.key} className="whitespace-nowrap px-4 py-3 text-slate-700">
-                    {column.render ? column.render(row) : valueAt(row, column.key)}
+          <tbody className="divide-y divide-ash-50">
+            {rows?.map((row, i) => (
+              <tr key={row.id || i} className="transition-colors hover:bg-ash-50/50">
+                {columns.map(col => (
+                  <td key={col.key} className="whitespace-nowrap px-4 py-3 text-ash-700">
+                    {col.render ? col.render(row) : formatValue(getValue(row, col.key))}
                   </td>
                 ))}
               </tr>
@@ -36,17 +37,35 @@ export default function DataTable({ columns, rows, empty = 'No records found' })
           </tbody>
         </table>
       </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-ash-100 px-4 py-3">
+          <p className="text-xs text-ash-500">
+            Page {(page || 0) + 1} of {totalPages}
+          </p>
+          <div className="flex gap-1">
+            <button
+              className="btn-icon btn-sm text-ash-500 hover:bg-ash-100"
+              disabled={!page || page === 0}
+              onClick={() => onPageChange?.(page - 1)}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              className="btn-icon btn-sm text-ash-500 hover:bg-ash-100"
+              disabled={page >= totalPages - 1}
+              onClick={() => onPageChange?.(page + 1)}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function valueAt(row, key) {
-  const value = key.split('.').reduce((acc, part) => acc?.[part], row);
-  if (value === null || value === undefined || value === '') {
-    return '-';
-  }
-  if (typeof value === 'boolean') {
-    return value ? 'Yes' : 'No';
-  }
+function formatValue(value) {
+  if (value === null || value === undefined) return <span className="text-ash-300">—</span>;
+  if (typeof value === 'boolean') return value ? '✓' : '✗';
   return String(value);
 }

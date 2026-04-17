@@ -1,0 +1,333 @@
+# Apana Swastha Kendra ERP — Complete Rebuild Plan
+
+## Problem Statement
+
+The current ERP system has a partially built Spring Boot backend and React frontend, but suffers from numerous issues that prevent it from working properly. After thorough analysis of all 140+ backend Java files, 16 frontend pages, and 9 reusable components, here is the full diagnosis and rebuild plan.
+
+---
+
+## Current State Analysis
+
+### What Exists & Works (Partially)
+- ✅ Spring Boot project structure with 14 packages
+- ✅ JWT auth flow (login, bootstrap, refresh, logout)
+- ✅ User entity with role hierarchy and scope filtering
+- ✅ Permission catalog system (complex but functional)
+- ✅ Geographic hierarchy entities (State, District, Block, Center)
+- ✅ Basic OPD/IPD entities and service layer
+- ✅ Pharmacy FIFO dispense logic
+- ✅ Billing/Invoice with basic commission
+- ✅ Wallet entity with credit/debit
+- ✅ Notification entity
+- ✅ React + Vite + Tailwind setup with routing
+
+### Critical Issues Found
+
+#### Backend Issues
+| # | Issue | Severity |
+|---|-------|----------|
+| 1 | **Commission system broken** — Creates a single flat commission instead of hierarchical distribution (Associate 4% → Block 3% → District 2% → State 1% → Platform 0.5%) | 🔴 Critical |
+| 2 | **No Family/Health Card system** — Patients registered directly, no family grouping, no card number generation (ASK-BH-PTN-003-00045 format) | 🔴 Critical |
+| 3 | **UHID format wrong** — Currently `HOSP-2026-000001`, spec requires `ASK-{state}-{district}-{block}-{serial}` | 🔴 Critical |
+| 4 | **Missing `CENTER_MANAGER` role in enum** — Code references it but the `Role.java` enum doesn't have it (only goes to `CENTER_STAFF`) | 🟡 Major |
+| 5 | **No vendor management module** — Vendor catalog, ordering, and center inventory missing entirely | 🟡 Major |
+| 6 | **Circular dependency** — `PatientService` ↔ `BillingService` uses `@Lazy` workaround | 🟡 Major |
+| 7 | **No family wallet** — Wallet only supports `CENTER` entity type, no `FAMILY` wallets | 🟡 Major |
+| 8 | **HR module incomplete** — Attendance, leave, payroll entities exist but logic is minimal | 🟡 Major |
+| 9 | **No QR code generation** — Health card system requires QR codes | 🟡 Major |
+| 10 | **Doctor scheduling incomplete** — Slots and appointment booking not fully implemented | 🟡 Major |
+
+#### Frontend Issues
+| # | Issue | Severity |
+|---|-------|----------|
+| 1 | **Generic UI components** — `ApiFormCard` and `QueryTableCard` are JSON-dump forms, not user-friendly | 🔴 Critical |
+| 2 | **No role-based navigation** — All 14 nav items shown to every user regardless of role | 🔴 Critical |
+| 3 | **Manual ID entry** — Users must type raw IDs (centerId, patientId) instead of dropdowns/search | 🔴 Critical |
+| 4 | **Bug: `endpoints.delete`** — Called in UsersPage but method is `endpoints.del` | 🔴 Bug |
+| 5 | **Bug: `onSuccess` in useQuery** — React Query v5 removed `onSuccess` from `useQuery` options | 🔴 Bug |
+| 6 | **No mobile sidebar** — Sidebar toggle exists in `uiStore` but sidebar doesn't respond | 🟡 Major |
+| 7 | **Plain design** — White/blue only, no premium healthcare aesthetic | 🟡 Major |
+| 8 | **No loading states** — Missing skeletons, spinners, and empty states | 🟡 Major |
+| 9 | **No toast notifications** — Mutations silently succeed/fail | 🟡 Major |
+| 10 | **No data validation** — Forms lack client-side validation | 🟡 Major |
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Scope Decision**: This is an enormous system (11 modules, 12 roles). I propose rebuilding it in **focused batches** within this conversation, starting with the foundation and clinical core. Each batch will be **fully functional and testable** before moving to the next.
+
+> [!WARNING]
+> **Database Reset**: The rebuild will change several entity schemas (Family, HealthCard, Commission, Wallet). Your existing MySQL data will need to be dropped and recreated. JPA's `ddl-auto: update` will handle schema creation, but **existing data may be incompatible**.
+
+> [!IMPORTANT]
+> **Tech Stack Confirmation**: You specified **Tailwind CSS** and **Bun** — I will use both as requested. The backend remains Spring Boot 3.2.5 + Java 17 + MySQL 8.
+
+---
+
+## Proposed Changes
+
+### Build Order (Practical Execution Plan)
+
+I'll rebuild the system in **4 focused batches**, each producing a working, testable application:
+
+---
+
+### 🔵 Batch 1: Foundation — Auth, Users, Geography, Centers (Phase 1+2)
+*Make the core platform boot, login, and manage the organizational hierarchy*
+
+#### Backend Fixes & Enhancements
+
+##### [MODIFY] `Role.java` — Add missing CENTER_MANAGER role properly
+- Verify all 13 roles match spec (SUPER_ADMIN through PATIENT)
+
+##### [MODIFY] `SecurityConfig.java` — Fix endpoint security patterns
+- Ensure `/api/auth/**` is properly permitted (currently `/auth/**` which works due to context-path)
+
+##### [MODIFY] `UserService.java` — Fix scope resolution bugs
+- Fix geographic validation for hierarchical user creation
+- Fix permission cascade handling
+
+##### [MODIFY] `UserController.java` — Add missing update/delete endpoints
+- The frontend calls `PUT /users/{id}` and `DELETE /users/{id}` — verify these exist
+
+##### Geographic Module — Verify CRUD completeness
+- State, District, Block, Center controllers must have full CRUD
+- Centers must track block/district/state relationships
+
+#### Frontend Complete Redesign
+
+##### [MODIFY] `index.css` — Premium healthcare design system
+- Dark slate/emerald healthcare theme with glassmorphism
+- CSS custom properties for all design tokens
+- Utility classes for cards, inputs, buttons, badges
+- Smooth transitions and micro-animations
+
+##### [MODIFY] `Sidebar.jsx` — Role-based navigation with animations
+- Filter navigation items by user role and permissions
+- Collapsible sidebar with smooth transitions
+- Active state indicators
+- Mobile responsive drawer
+
+##### [MODIFY] `TopbarPhase1.jsx` → `Topbar.jsx` — Professional header
+- User avatar with role badge
+- Notification bell
+- Breadcrumb navigation
+- Quick search
+
+##### [MODIFY] `LoginPage.jsx` — Premium login experience
+- Animated gradient background
+- Glassmorphic login card
+- Form validation with error states
+- Bootstrap mode with clear instructions
+
+##### [MODIFY] `DashboardPage.jsx` — Role-specific KPI dashboard
+- Dynamic widgets based on user role
+- Animated counters
+- Real charts with gradient fills
+- Quick action cards
+
+##### [MODIFY] `UsersPage.jsx` — Complete user management
+- Proper form with dropdown selectors (not raw IDs)
+- Fix `endpoints.delete` → `endpoints.del` bug
+- Fix React Query v5 `onSuccess` bug
+- DataTable with pagination, search, and sort
+- Edit/deactivate with confirmation modals
+
+##### [MODIFY] `CentersPage.jsx` — Geographic hierarchy management
+- Cascading dropdowns (State → District → Block)
+- Center creation with auto-code generation
+- Map/grid view of centers
+
+##### [MODIFY] `ProfilePage.jsx` — Clean profile management
+- Tabbed interface (Personal, Security, Bank Details)
+- Password change flow
+- Contact verification
+
+##### [NEW] Reusable Components Overhaul
+- `Modal.jsx` — Animated modal with backdrop
+- `Toast.jsx` — Notification toast system
+- `Skeleton.jsx` — Loading skeletons
+- `EmptyState.jsx` — Empty data states
+- `SearchSelect.jsx` — Searchable dropdown component
+- `ConfirmDialog.jsx` — Confirmation dialogs
+- `Badge.jsx` — Status and role badges
+- `Pagination.jsx` — Table pagination
+- `StatCard.jsx` — Animated KPI cards
+
+---
+
+### 🟢 Batch 2: Family Enrollment & Clinical Core (Phase 3+4)
+*Health cards, family management, OPD queue system*
+
+#### Backend
+
+##### [NEW] Family & Health Card System
+- `Family.java` entity with members
+- `HealthCard.java` with card number generation (`ASK-{state}-{district}-{block}-{serial}`)
+- `FamilyWallet.java` with top-up and deduction
+- `FamilyController.java` — Registration, member management, card lookup
+- QR code generation for health cards
+
+##### [MODIFY] `Patient.java` — Link to Family
+- Add family_id reference
+- Update UHID to match card-based format
+
+##### [MODIFY] OPD Module — Complete queue workflow
+- Token generation scoped by center + date
+- Status workflow: WAITING → IN_PROGRESS → COMPLETED/CANCELLED/NO_SHOW
+- Doctor console: pick token, enter diagnosis, prescribe
+- Real-time queue with polling
+
+#### Frontend
+
+##### [NEW] `FamilyPage.jsx` — Family enrollment & management
+- Family registration form
+- Member add/edit
+- Health card display with QR
+- Wallet balance and top-up
+- Transaction history
+
+##### [MODIFY] `PatientsPage.jsx` — Linked to families
+- Search by UHID, name, phone, card number
+- Patient profile with history tabs
+
+##### [MODIFY] `OpdPage.jsx` — Complete OPD console
+- Receptionist view: scan card → create visit → assign token
+- Doctor view: queue list → select patient → diagnosis → prescribe → complete
+- Live token status board
+
+---
+
+### 🟡 Batch 3: Pharmacy, Billing & Commission (Phase 5+6)
+*Medicine management, invoicing, and hierarchical commission distribution*
+
+#### Backend
+
+##### [MODIFY] `PharmacyService.java` — Polish FIFO and alerts
+- Verify FIFO batch selection works correctly
+- Batch expiry tracking with automated alerts
+- Stock receiving workflow
+
+##### [MODIFY] `BillingService.java` — Fix commission distribution
+- **Critical**: Implement hierarchical commission split:
+  - Associate: 4% → credited to associate wallet
+  - Block: 3% → credited to block/center wallet
+  - District: 2% → credited to district wallet
+  - State: 1% → credited to state wallet
+  - Platform: 0.5% → credited to platform wallet
+- Atomic transaction (all-or-nothing)
+- Handle case where family enrolled by center staff (4% goes to center)
+
+##### [NEW] Vendor Management
+- `Vendor.java`, `VendorProduct.java`, `PurchaseOrder.java`
+- Vendor catalog management
+- Center inventory ordering
+
+#### Frontend
+
+##### [MODIFY] `PharmacyPage.jsx` — Professional pharmacy console
+- Drug master with search/filter
+- Batch stock management with expiry indicators
+- FIFO dispense with patient search
+- Stock alerts dashboard
+
+##### [MODIFY] `BillingPage.jsx` — Complete billing workflow
+- Invoice creation from OPD/IPD visit
+- Line item editor
+- Multiple payment modes
+- Commission distribution visualization
+- Receipt generation
+
+##### [NEW] `VendorsPage.jsx` — Vendor management
+- Vendor list and catalog
+- Purchase orders
+
+---
+
+### 🔵 Batch 4: IPD, HR, Appointments & Reports (Phase 7+8)
+*Inpatient care, HR operations, and analytics*
+
+#### Backend
+
+##### [MODIFY] IPD Module — Complete inpatient flow
+- Bed management with ward categories (General/ICU/Maternity/Pediatric)
+- Bed grid visualization
+- Daily charge tracking
+- Discharge → auto-invoice
+
+##### HR Module — Attendance, Leave & Payroll
+- Staff attendance with daily recording
+- Leave application and approval workflow
+- Monthly payroll calculation (prorated)
+- Salary wallet crediting
+
+##### Doctor Scheduling
+- Time slot management
+- Appointment booking (fresh/return/emergency/lab)
+- Calendar view
+
+##### Reports Module — Analytics endpoints
+- Dashboard KPIs per role
+- Revenue reports (daily/weekly/monthly)
+- Patient volume analytics
+- Stock reports
+- Commission reports
+
+#### Frontend
+
+##### [MODIFY] `IpdPage.jsx` — IPD ward management
+- Bed grid with occupancy visualization
+- Admission form with bed selection
+- Active admissions list
+- Discharge workflow
+
+##### [MODIFY] `HrPage.jsx` — HR operations console
+- Attendance marking calendar
+- Leave management with approval
+- Payroll calculation and history
+
+##### [MODIFY] `DoctorsPage.jsx` + `AppointmentsPage.jsx`
+- Doctor schedule management
+- Appointment booking and calendar
+
+##### [MODIFY] `ReportsPage.jsx` — Analytics dashboard
+- Filterable reports by date range, center, type
+- Chart visualizations (line, bar, pie)
+- Export to PDF/Excel
+
+##### [MODIFY] `WalletPage.jsx` — Wallet management
+- Balance display with transaction history
+- Top-up interface
+- Commission earned summary
+
+---
+
+## Open Questions
+
+> [!IMPORTANT]
+> **Question 1**: Should I start with **Batch 1** (Foundation: Auth + Users + Geography + Professional UI) and deliver a fully working, testable system before moving to Batch 2? This is the practical approach since each batch builds on the previous one.
+
+> [!IMPORTANT]
+> **Question 2**: Your `.env` has real database credentials. Should I drop and recreate the database schema, or try to maintain compatibility with existing data?
+
+> [!IMPORTANT]
+> **Question 3**: The spec mentions **CENTER_MANAGER** as a role but your current `Role.java` doesn't have it (it jumps from BLOCK_MANAGER to HR_MANAGER). Your spec shows the hierarchy as Block Manager → HR Manager / Doctor / Pharmacist / Receptionist / Center Staff / Associate. Should I keep the current roles or add CENTER_MANAGER?
+
+---
+
+## Verification Plan
+
+### For Each Batch
+1. **Backend**: `mvn compile` passes with zero errors
+2. **Backend**: `mvn spring-boot:run` starts and connects to MySQL
+3. **Frontend**: `bun run dev` starts without errors
+4. **Integration**: Browser test — Login → Navigate → CRUD operations
+5. **API**: Test key endpoints via browser dev tools
+
+### Specific Tests
+- Bootstrap super admin → Login → Create hierarchy (State Manager → District Manager → Block Manager → Center Staff)
+- Create center with geographic assignment
+- Verify role-based navigation filtering
+- Verify scope-based data isolation
