@@ -123,8 +123,16 @@ public class GeographicService {
     @Transactional
     public void deleteState(Long id) {
         assertCanCreateState(currentUserService.get());
-        if (districtRepository.existsByState_Id(id) || centerRepository.existsByState_Id(id)) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Cannot delete state with districts or centers");
+        boolean hasDistricts = districtRepository.existsByState_Id(id);
+        boolean hasCenters = centerRepository.existsByState_Id(id);
+        if (hasDistricts || hasCenters) {
+            if (hasDistricts && hasCenters) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Cannot delete state with existing districts and centers");
+            }
+            if (hasDistricts) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Cannot delete state with existing districts");
+            }
+            throw new AppException(HttpStatus.BAD_REQUEST, "Cannot delete state with existing centers");
         }
         stateRepository.delete(findState(id));
     }
@@ -151,8 +159,16 @@ public class GeographicService {
     @Transactional
     public void deleteDistrict(Long id) {
         assertCanCreateDistrict(currentUserService.get());
-        if (blockRepository.existsByDistrict_Id(id) || centerRepository.existsByDistrict_Id(id)) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Cannot delete district with blocks or centers");
+        boolean hasBlocks = blockRepository.existsByDistrict_Id(id);
+        boolean hasCenters = centerRepository.existsByDistrict_Id(id);
+        if (hasBlocks || hasCenters) {
+            if (hasBlocks && hasCenters) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Cannot delete district with existing blocks and centers");
+            }
+            if (hasBlocks) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Cannot delete district with existing blocks");
+            }
+            throw new AppException(HttpStatus.BAD_REQUEST, "Cannot delete district with existing centers");
         }
         districtRepository.delete(findDistrict(id));
     }
