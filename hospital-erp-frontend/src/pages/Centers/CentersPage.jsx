@@ -20,11 +20,11 @@ export default function CentersPage() {
   // State form
   const [stateForm, setStateForm] = useState({ name: '', code: '' });
   // District form
-  const [districtForm, setDistrictForm] = useState({ name: '', code: '', stateId: '' });
+  const [districtForm, setDistrictForm] = useState({ name: '', stateId: '' });
   // Block form
-  const [blockForm, setBlockForm] = useState({ name: '', code: '', districtId: '' });
+  const [blockForm, setBlockForm] = useState({ name: '', districtId: '' });
   // Center form
-  const [centerForm, setCenterForm] = useState({ name: '', code: '', address: '', city: '', phone: '', email: '', pincode: '', blockId: '', districtId: '', stateId: '' });
+  const [centerForm, setCenterForm] = useState({ name: '', address: '', city: '', phone: '', email: '', pincode: '', blockId: '', districtId: '', stateId: '' });
 
   // Queries
   const statesQuery = useQuery({ queryKey: ['states'], queryFn: () => endpoints.get('/states') });
@@ -73,9 +73,9 @@ export default function CentersPage() {
   const closeModal = () => {
     setShowModal(false);
     setStateForm({ name: '', code: '' });
-    setDistrictForm({ name: '', code: '', stateId: '' });
-    setBlockForm({ name: '', code: '', districtId: '' });
-    setCenterForm({ name: '', code: '', address: '', city: '', phone: '', email: '', pincode: '', blockId: '', districtId: '', stateId: '' });
+    setDistrictForm({ name: '', stateId: '' });
+    setBlockForm({ name: '', districtId: '' });
+    setCenterForm({ name: '', address: '', city: '', phone: '', email: '', pincode: '', blockId: '', districtId: '', stateId: '' });
   };
 
   const updateCenter = (key, value) => {
@@ -173,7 +173,6 @@ export default function CentersPage() {
         <SectionCard title="Districts">
           <DataTable rows={districtsQuery.data ?? []} columns={[
             { key: 'id', label: 'ID' },
-            { key: 'code', label: 'Code', render: r => <span className="font-mono font-bold">{r.code}</span> },
             { key: 'name', label: 'Name', render: r => <span className="font-medium text-ash-900">{r.name}</span> },
             { key: 'stateName', label: 'State' }
           ]} emptyTitle="No districts yet" />
@@ -184,7 +183,6 @@ export default function CentersPage() {
         <SectionCard title="Blocks">
           <DataTable rows={blocksQuery.data ?? []} columns={[
             { key: 'id', label: 'ID' },
-            { key: 'code', label: 'Code', render: r => <span className="font-mono font-bold">{r.code}</span> },
             { key: 'name', label: 'Name', render: r => <span className="font-medium text-ash-900">{r.name}</span> },
             { key: 'districtName', label: 'District' }
           ]} emptyTitle="No blocks yet" />
@@ -205,7 +203,6 @@ export default function CentersPage() {
           {modalType === 'district' && (
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="District Name" value={districtForm.name} onChange={v => setDistrictForm(c => ({ ...c, name: v }))} required />
-              <Field label="Code" value={districtForm.code} onChange={v => setDistrictForm(c => ({ ...c, code: v }))} required />
               <SelectField label="State" value={districtForm.stateId} onChange={v => setDistrictForm(c => ({ ...c, stateId: v }))}
                 options={(statesQuery.data ?? []).map(s => ({ value: s.id, label: `${s.name} (${s.code})` }))} required />
             </div>
@@ -213,7 +210,6 @@ export default function CentersPage() {
           {modalType === 'block' && (
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Block Name" value={blockForm.name} onChange={v => setBlockForm(c => ({ ...c, name: v }))} required />
-              <Field label="Code" value={blockForm.code} onChange={v => setBlockForm(c => ({ ...c, code: v }))} required />
               <SelectField label="District" value={blockForm.districtId} onChange={v => setBlockForm(c => ({ ...c, districtId: v }))}
                 options={(districtsQuery.data ?? []).map(d => ({ value: d.id, label: d.name }))} required />
             </div>
@@ -221,7 +217,6 @@ export default function CentersPage() {
           {modalType === 'center' && (
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Center Name" value={centerForm.name} onChange={v => updateCenter('name', v)} required />
-              <Field label="Center Code" value={centerForm.code} onChange={v => updateCenter('code', v)} required placeholder="ASK-BH-PTN-001" />
               <SelectField label="State" value={centerForm.stateId} onChange={v => updateCenter('stateId', v)}
                 options={(statesQuery.data ?? []).map(s => ({ value: s.id, label: `${s.name} (${s.code})` }))} required />
               <SelectField label="District" value={centerForm.districtId} onChange={v => updateCenter('districtId', v)}

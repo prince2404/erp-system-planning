@@ -4,6 +4,7 @@ const roleColors = {
   STATE_MANAGER: 'bg-emerald-100 text-emerald-800 border-emerald-200',
   DISTRICT_MANAGER: 'bg-teal-100 text-teal-800 border-teal-200',
   BLOCK_MANAGER: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+  CENTER_MANAGER: 'bg-sky-100 text-sky-800 border-sky-200',
   HR_MANAGER: 'bg-orange-100 text-orange-800 border-orange-200',
   DOCTOR: 'bg-blue-100 text-blue-800 border-blue-200',
   PHARMACIST: 'bg-lime-100 text-lime-800 border-lime-200',

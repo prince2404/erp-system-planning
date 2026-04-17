@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface BlockRepository extends JpaRepository<Block, Long> {
     List<Block> findByDistrict_Id(Long districtId);
+    boolean existsByDistrict_Id(Long districtId);
 }
