@@ -22,11 +22,11 @@ export const navigation = [
   },
   {
     to: '/users', label: 'User Management', icon: Users, section: 'admin',
-    roles: ['SUPER_ADMIN', 'ADMIN', 'STATE_MANAGER', 'DISTRICT_MANAGER', 'BLOCK_MANAGER']
+    roles: ['SUPER_ADMIN', 'ADMIN', 'STATE_MANAGER', 'DISTRICT_MANAGER', 'BLOCK_MANAGER', 'CENTER_MANAGER']
   },
   {
     to: '/centers', label: 'Health Centers', icon: MapPinned, section: 'admin',
-    roles: ['SUPER_ADMIN', 'ADMIN', 'STATE_MANAGER', 'DISTRICT_MANAGER', 'BLOCK_MANAGER']
+    roles: ['SUPER_ADMIN', 'ADMIN', 'STATE_MANAGER', 'DISTRICT_MANAGER', 'BLOCK_MANAGER', 'CENTER_MANAGER']
   },
   {
     to: '/patients', label: 'Patients', icon: HeartPulse, section: 'clinical',
@@ -66,7 +66,7 @@ export const navigation = [
   },
   {
     to: '/reports', label: 'Reports', icon: BarChart3, section: 'analytics',
-    roles: ['SUPER_ADMIN', 'ADMIN', 'STATE_MANAGER', 'DISTRICT_MANAGER', 'BLOCK_MANAGER']
+    roles: ['SUPER_ADMIN', 'ADMIN', 'STATE_MANAGER', 'DISTRICT_MANAGER', 'BLOCK_MANAGER', 'CENTER_MANAGER']
   },
   {
     to: '/profile', label: 'My Profile', icon: Settings, section: 'account',
@@ -100,7 +100,7 @@ export function getGroupedNavigation(userRole) {
 
 export const roles = [
   'SUPER_ADMIN', 'ADMIN', 'STATE_MANAGER', 'DISTRICT_MANAGER', 'BLOCK_MANAGER',
-  'HR_MANAGER', 'DOCTOR', 'PHARMACIST', 'RECEPTIONIST', 'ASSOCIATE', 'CENTER_STAFF', 'PATIENT'
+  'CENTER_MANAGER', 'HR_MANAGER', 'DOCTOR', 'PHARMACIST', 'RECEPTIONIST', 'ASSOCIATE', 'CENTER_STAFF', 'PATIENT'
 ];
 
 export const scopeTypes = ['SYSTEM', 'STATE', 'DISTRICT', 'BLOCK', 'CENTER', 'SELF'];

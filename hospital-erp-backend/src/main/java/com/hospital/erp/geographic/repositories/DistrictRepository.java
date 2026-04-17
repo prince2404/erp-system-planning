@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface DistrictRepository extends JpaRepository<District, Long> {
     List<District> findByState_Id(Long stateId);
+    boolean existsByState_Id(Long stateId);
 }
